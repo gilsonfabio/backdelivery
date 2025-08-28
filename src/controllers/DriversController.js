@@ -66,13 +66,17 @@ module.exports = {
     async checkAceite (request, response) {
         let id = request.body.motoristaId;
         //console.log('Motorista =>',id); 
-        const aceite = await connection('drivers')
+        const driver = await connection('drivers')
         .where('drvId', id)
         .orderBy('drvId')
         .select('*');
         
-        aceite = true;
-
+        if (!driver) {
+          aceite = false;          
+        }else {
+          aceite = true;
+        }
+          
         return response.json(aceite);
     }, 
 
