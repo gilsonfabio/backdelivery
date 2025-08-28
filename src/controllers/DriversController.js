@@ -32,48 +32,39 @@ module.exports = {
     },
 
     async searchDriver(request, response) {
-        try {
-          let latitude = parseFloat(request.body.lat);
-          let longitude = parseFloat(request.body.lng);
-      
-          //console.log('Latitude:',latitude)
-          //console.log('Longitude:',longitude)
-          const drivers = await connection("drivers").select("*");
-      
-          if (!drivers || drivers.length === 0) {
-            return response.status(404).json({ error: "Nenhum motorista encontrado" });
-          }
-      
-          // encontra o motorista mais próximo
-          let nearestDriver = null;
-          let minDistance = Infinity;
-      
-          for (const driver of drivers) {
-            const dist = haversineDistance(
-              latitude,
-              longitude,
-              driver.lat,
-              driver.lng
-            );
-      
-            if (dist < minDistance) {
-              minDistance = dist;
-              nearestDriver = driver;
-            }
-          }
-      
-          //console.log("Motorista mais próximo:", nearestDriver, "Distância:", minDistance, "km");
-      
-          // aqui chamamos a notificação para esse motorista
-          //if (nearestDriver && nearestDriver.expo_token) {
-          //  await sendNotification(nearestDriver.expo_token, "Nova corrida disponível", "Você foi selecionado para uma nova corrida!");
-          //}
-      
-          return response.json({ driver: nearestDriver, distance: minDistance });
-        } catch (err) {
-          console.error(err);
-          return response.status(500).json({ error: "Erro ao buscar motorista" });
+      try {
+        let latitude = parseFloat(request.body.lat);
+        let longitude = parseFloat(request.body.lng);
+    
+        const drivers = await connection("drivers").select("*");
+    
+        if (!drivers || drivers.length === 0) {
+          return response.status(404).json({ error: "Nenhum motorista encontrado" });
         }
+    
+        // calcula distância de cada motorista e adiciona ao objeto
+        const driversComDistancia = drivers.map((driver) => {
+          const dist = haversineDistance(
+            latitude,
+            longitude,
+            parseFloat(driver.lat),
+            parseFloat(driver.lng)
+          );
+          return {
+            ...driver,
+            distance: dist,
+          };
+        });
+    
+        // ordena do mais próximo para o mais distante
+        driversComDistancia.sort((a, b) => a.distance - b.distance);
+    
+        // retorna lista ordenada
+        return response.json(driversComDistancia);
+      } catch (err) {
+        console.error(err);
+        return response.status(500).json({ error: "Erro ao buscar motoristas" });
+      }
     },
 
     async checkAceite (request, response) {
