@@ -36,8 +36,8 @@ module.exports = {
           let latitude = parseFloat(request.body.lat);
           let longitude = parseFloat(request.body.lng);
       
-          console.log('Latitude:',latitude)
-          console.log('Longitude:',longitude)
+          //console.log('Latitude:',latitude)
+          //console.log('Longitude:',longitude)
           const drivers = await connection("drivers").select("*");
       
           if (!drivers || drivers.length === 0) {
@@ -62,7 +62,7 @@ module.exports = {
             }
           }
       
-          console.log("Motorista mais próximo:", nearestDriver, "Distância:", minDistance, "km");
+          //console.log("Motorista mais próximo:", nearestDriver, "Distância:", minDistance, "km");
       
           // aqui chamamos a notificação para esse motorista
           //if (nearestDriver && nearestDriver.expo_token) {
@@ -78,7 +78,7 @@ module.exports = {
 
     async checkAceite (request, response) {
         let id = request.body.motoristaId;
-        console.log('Motorista =>',id); 
+        //console.log('Motorista =>',id); 
         const aceite = await connection('drivers')
         .where('drvId', id)
         .orderBy('drvId')
@@ -128,7 +128,7 @@ module.exports = {
     },
 
     async newdriver(request, response) {
-        console.log(request.body);
+        //console.log(request.body);
         const {nome, cpf, nascimento, email, celular , password} = request.body;
         let status = 'A'; 
         let snhCrypt = await bcrypt.hash(password, saltRounds);

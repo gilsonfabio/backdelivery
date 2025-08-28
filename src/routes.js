@@ -25,7 +25,7 @@ routes.get('/grupos', GruposController.index);
 routes.post('/newgrupo', GruposController.create);
 
 routes.get('/driver', DriversController.index);
-routes.get('/searchDriver', DriversController.searchDriver);
+routes.post('/searchDriver', DriversController.searchDriver);
 routes.get('/checkAceite', DriversController.checkAceite);
 routes.post('/newdriver', DriversController.newdriver);
 
