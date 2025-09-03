@@ -28,6 +28,7 @@ routes.get('/driver', DriversController.index);
 routes.post('/searchDriver', DriversController.searchDriver);
 routes.get('/checkAceite', DriversController.checkAceite);
 routes.post('/newdriver', DriversController.newdriver);
+routes.post('/signInDriver', DriversController.signIn);
 
 routes.get('/travel', TravelsController.index);
 routes.post('/newtravel', TravelsController.create);
