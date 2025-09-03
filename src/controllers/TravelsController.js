@@ -9,7 +9,17 @@ module.exports = {
         .select('*');
         
         return response.json(travels);
-    },  
+    },
+    
+    async searchTravel (request, response) {
+        id = response.params.idTvl;
+
+        const travel = await connection('travels')
+        .where('tvlId', id)
+        .select('*');
+        
+        return response.json(travel);
+    },
     
     async create(request, response) {
         const {
