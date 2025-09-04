@@ -33,7 +33,7 @@ module.exports = {
         const travel = await connection('travels')
         .where('tvlId', id)
         .update({
-            tvlMotId: idDrv,
+            tvlDrvId: idDrv,
             tvlStatus: status
         });
         
@@ -89,7 +89,7 @@ module.exports = {
             tvlFraPac: fragilidade,
             tvlTipPac: tipoItem,
             tvlPreco: preco,
-            //tvlMotId: motorista,
+            //tvlDrvId: motorista,
             //tvlDatIni: datInicio,
             //tvlHorIni: horInicio,
             //tvlDatTer: datTermino,
