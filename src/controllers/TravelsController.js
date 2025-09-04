@@ -26,7 +26,7 @@ module.exports = {
     },
 
     async acceptTravel (request, response) {
-        let id = request.body.id;
+        let id = request.body.tvlId;
         let idDrv = request.body.driverId;
         let status = 2;
 
