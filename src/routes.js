@@ -32,7 +32,9 @@ routes.post('/signInDriver', DriversController.signIn);
 
 routes.get('/travel', TravelsController.index);
 routes.post('/newtravel', TravelsController.create);
-routes.get('/searchTravel/:idTvl', TravelsController.searchTravel);
+routes.post('/accept', TravelsController.acceptTravel);
+routes.post('/reject', TravelsController.rejectTravel);
+routes.get('/searchTravel/:id', TravelsController.searchTravel);
 
 routes.get('/creditos', CreditosController.index);
 routes.post('/newcredito', CreditosController.create);

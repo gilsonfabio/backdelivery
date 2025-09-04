@@ -12,13 +12,42 @@ module.exports = {
     },
     
     async searchTravel (request, response) {
-        id = response.params.idTvl;
+        id = request.params.id;
+
+        console.log('Motorista:',id);
 
         const travel = await connection('travels')
         .where('tvlId', id)
         .select('*');
         
+        console.log(travel);
+
         return response.json(travel);
+    },
+
+    async acceptTravel (request, response) {
+        let id = request.body.id;
+        let idDrv = request.body.driverId;
+        let status = 2;
+
+        const travel = await connection('travels')
+        .where('tvlId', id)
+        .update({
+            tvlMotId: idDrv,
+            tvlStatus: status
+        });
+        
+        return response.status(200).json({ error: 'Viagem aceita com sucesso!'});
+    },
+
+    async rejectTravel (request, response) {
+        let id = request.body.id;
+         
+        const travel = await connection('travels')
+        .where('tvlId', id)
+        .select('*');
+        
+        return response.status(200).json({ error: 'Viagem rejeitada!'});
     },
     
     async create(request, response) {
@@ -42,7 +71,8 @@ module.exports = {
         let day = datProcess.getDate();
         let datTravel = new Date(year, month, day);
         let horTravel = moment().format('hh:mm:ss'); 
-
+        
+        let auxTimeout = 30;
         let status = 1;
 
         const [tvlId] = await connection('travels').insert({
@@ -68,7 +98,8 @@ module.exports = {
             //tvlCupDes: cupom,
             //tvlVlrPag: vlrPago,
             //tvlTaxAdm: taxAdmin,
-            //tvlVlrMot: vlrMotorista,              
+            //tvlVlrMot: vlrMotorista,   
+            tvlTimeout: auxTimeout,          
             tvlStatus: status 
         });
            
