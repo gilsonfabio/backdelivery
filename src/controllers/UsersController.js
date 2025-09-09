@@ -113,13 +113,13 @@ module.exports = {
         const id = request.body.userId; 
         const token = request.body.token;
             
-        const [usrId] = await connection('users')
+        const user = await connection('users')
         .where(usrId, id)
         .update({
             usrToken: token 
         });
            
-        return response.json({usrId});
+        return response.status(200).json({ msn: 'Token atualizado com sucesso!'});
     },
      
     async searchUser(request, response) {
