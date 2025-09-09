@@ -108,7 +108,20 @@ module.exports = {
            
         return response.json({usrId});
     },
-
+     
+    async saveToken(request, response) {
+        const id = request.body.id; 
+        const token = request.body.token;
+            
+        const [usrId] = await connection('users')
+        .where(usrId, id)
+        .update({
+            usrToken: token 
+        });
+           
+        return response.json({usrId});
+    },
+     
     async searchUser(request, response) {
         let cpf = request.params.cpf;
 

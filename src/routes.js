@@ -20,6 +20,7 @@ routes.post('/newuser', UsersController.newuser);
 routes.get('/searchUser/:cpf', UsersController.searchUser);
 routes.get('/busUser/:idUsr', UsersController.busUser);
 routes.post('/loginCpf', UsersController.loginCPF);
+routes.post('/saveToken', UsersController.saveToken);
 
 routes.get('/grupos', GruposController.index);
 routes.post('/newgrupo', GruposController.create);
