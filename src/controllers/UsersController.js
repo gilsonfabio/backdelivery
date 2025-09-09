@@ -110,7 +110,7 @@ module.exports = {
     },
      
     async saveToken(request, response) {
-        const id = request.body.id; 
+        const id = request.body.userId; 
         const token = request.body.token;
             
         const [usrId] = await connection('users')
