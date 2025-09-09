@@ -179,5 +179,17 @@ module.exports = {
            
         return response.json({drvId});
     },
+
+    async savDrvToken(request, response) {
+      const id = request.body.id; 
+      const token = request.body.token;
+
+      const updToken = await connection('drivers')
+      .update({
+          drvToken: token, 
+      });
+         
+      return response.status(200).json({ msn: 'Token motorista atualizado!'});
+  },
         
 };
