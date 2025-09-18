@@ -182,14 +182,18 @@ module.exports = {
 
     async savDrvToken(request, response) {
       const id = request.body.id; 
-      const token = request.body.token;
+      const token = request.body.expoPushToken;
+      const lat = request.body.latitude;
+      const lng = request.body.longitude;
 
       const updToken = await connection('drivers')
       .update({
-          drvToken: token, 
+          drvToken: token,
+          drvAtuLat: lat,
+          drvAtuLng: lng, 
       });
          
       return response.status(200).json({ msn: 'Token motorista atualizado!'});
   },
-        
+          
 };

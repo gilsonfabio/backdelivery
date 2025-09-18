@@ -1,6 +1,7 @@
 const { Console } = require('console');
 const connection = require('../database/connection');
 const moment = require('moment/moment');
+const { initSocket, chamarMotoristasSequencial } = require("./socket");
 
 module.exports = {   
     async index (request, response) {
@@ -102,7 +103,24 @@ module.exports = {
             tvlTimeout: auxTimeout,          
             tvlStatus: status 
         });
-           
-        return response.json({tvlId});
-    },    
+        // busca motoristas disponíveis próximos
+        const motoristasDisponiveis = await connection("drivers")
+            .where("disponivel", 1)
+            .orderByRaw(
+                `ABS(oriLat - ${auxOriLat}) + ABS(oriLng - ${auxOriLng}) ASC`
+            );
+
+        // chama motoristas sequencialmente
+        chamarMotoristasSequencial(
+            tvlId,
+            motoristasDisponiveis,
+            auxId,
+            auxName,
+            { lat: auxOriLat, lng: auxOriLng },
+            { lat: auxDesLat, lng: auxDesLng }
+        );
+
+        return response.json({ tvlId });
+    },
+        
 };
