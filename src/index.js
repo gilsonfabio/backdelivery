@@ -4,7 +4,7 @@ const http = require("http");
 const routes = require("./routes");
 require("dotenv/config");
 
-const { initSocket } = require("./socket"); // import do socket que criamos
+const { initSocket } = require("./controllers/SocketController"); // import do socket que criamos
 
 const app = express();
 

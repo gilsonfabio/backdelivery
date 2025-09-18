@@ -1,7 +1,7 @@
 const { Console } = require('console');
 const connection = require('../database/connection');
 const moment = require('moment/moment');
-const { initSocket, chamarMotoristasSequencial } = require("./socket");
+const { initSocket, chamarMotoristasSequencial } = require("./SocketController");
 
 module.exports = {   
     async index (request, response) {
