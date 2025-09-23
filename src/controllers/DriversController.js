@@ -187,6 +187,7 @@ module.exports = {
       const lng = request.body.longitude;
 
       const updToken = await connection('drivers')
+      .where(drvId, id)
       .update({
           drvToken: token,
           drvAtuLat: lat,
