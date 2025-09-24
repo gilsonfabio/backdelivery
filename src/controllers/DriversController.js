@@ -163,7 +163,7 @@ module.exports = {
     async newdriver(request, response) {
         //console.log(request.body);
         const {nome, cpf, nascimento, email, celular , password} = request.body;
-        let status = 'A'; 
+        let status = 'P'; 
         let snhCrypt = await bcrypt.hash(password, saltRounds);
         const [drvId] = await connection('drivers').insert({
             drvNome: nome, 
@@ -195,6 +195,19 @@ module.exports = {
       });
          
       return response.status(200).json({ msn: 'Token motorista atualizado!'});
-  },
+    },
+
+    async updStaDriver(request, response) {
+      const id = request.body.id; 
+      const status = request.body.stat;
+
+      const updDriver = await connection('drivers')
+      .where(drvId, id)
+      .update({
+          drvStatus: status,
+      });
+         
+      return response.status(200).json({ msn: 'Status motorista atualizado!'});
+    },
           
 };

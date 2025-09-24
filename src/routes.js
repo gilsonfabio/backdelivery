@@ -31,6 +31,7 @@ routes.get('/checkAceite', DriversController.checkAceite);
 routes.post('/newdriver', DriversController.newdriver);
 routes.post('/signInDriver', DriversController.signIn);
 routes.put('/savDrvToken', DriversController.savDrvToken);
+routes.put('/updStaDriver', DriversController.updStaDriver);
 
 routes.get('/travel', TravelsController.index);
 routes.post('/newtravel', TravelsController.create);
