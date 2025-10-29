@@ -1,6 +1,9 @@
 const express = require('express');
 const routes = express.Router();
 
+const { chamarMotoristasSequencial } = require('./controllers/SocketController');
+const connection = require('./database/connection'); 
+
 const UsersController = require('./controllers/UsersController');
 const GruposController = require('./controllers/GruposController');
 const LinhasController = require('./controllers/LinhasController');
@@ -50,5 +53,28 @@ routes.post('/newlinha', LinhasController.create);
 routes.post('/authorize', EfipayController.auth);
 routes.post('/webhook', EfipayController.webhook);
 routes.post('/certificado', EfipayController.certificado);
+
+routes.post('/chamar-corrida', async (req, res) => {
+    try {
+      const { travelId, passageiroId, passageiroNome, origem, destino } = req.body;
+  
+      // Busca motoristas disponíveis
+      const motoristas = await connection('drivers')
+        .where('drvStatus', 'A')
+        .select('*');
+  
+      if (!motoristas || motoristas.length === 0) {
+        return res.status(404).json({ error: 'Nenhum motorista disponível' });
+      }
+  
+      // Chama motoristas sequencialmente
+      await chamarMotoristasSequencial(travelId, motoristas, passageiroId, passageiroNome, origem, destino);
+  
+      return res.json({ ok: true, msg: 'Notificações enviadas aos motoristas' });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erro ao chamar corrida' });
+    }
+  });
 
 module.exports = routes;

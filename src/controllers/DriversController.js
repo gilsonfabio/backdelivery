@@ -36,7 +36,7 @@ module.exports = {
 
       const usuario = await connection('drivers')
           .where('drvEmail', email) 
-          .select(`drvId`, `drvNome`, `drvEmail`, `drvPassword` )
+          .select('drvId', 'drvNome', 'drvEmail', 'drvPassword', 'drvToken' )
           .first();
       
       if (!usuario) {            
@@ -54,13 +54,14 @@ module.exports = {
       const user = {
           id: usuario.drvId,
           name: usuario.drvNome,
-          email: usuario.drvEmail
+          email: usuario.drvEmail,
+          usrToken: usuario.drvToken
       }
 
-      //let token = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail, nivel: user.drvNivAcesso }, process.env.SECRET_JWT, {
+      //let token = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail}, process.env.SECRET_JWT, {
       //    expiresIn: '1h'
       //});
-      //let refreshToken = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail, nivel: user.drvNivAcesso  }, process.env.SECRET_JWT_REFRESH, {
+      //let refreshToken = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail}, process.env.SECRET_JWT_REFRESH, {
       //    expiresIn: '2h'
       //});
       //console.log(user);
@@ -73,8 +74,11 @@ module.exports = {
       try {
         let latitude = parseFloat(request.body.lat);
         let longitude = parseFloat(request.body.lng);
-    
-        const drivers = await connection("drivers").select("*");
+        let status = 'A';
+
+        const drivers = await connection("drivers")
+        .where('drvStatus', status)
+        .select("*");
     
         if (!drivers || drivers.length === 0) {
           return response.status(404).json({ error: "Nenhum motorista encontrado" });
@@ -122,44 +126,6 @@ module.exports = {
         return response.json(aceite);
     }, 
 
-    async signIn(request, response) {
-        let email = request.body.email;
-        let senha = request.body.password;
-        
-        const driver = await connection('drivers')
-            .where('drvEmail', email) 
-            .select(`drvId`, `drvNome`, `drvEmail`, `drvPassword`)
-            .first();
-        
-        if (!driver) {            
-            return response.status(400).json({ error: 'Não encontrou motorista com este ID'});
-        } 
-
-        //let pass = driver.drvPassword;
-        //const match = await bcrypt.compare(senha, pass)
-
-        //if(!match) {
-        //    return response.status(403).send({ auth: false, message: 'User invalid!' });
-        //}
-
-        const drv = {
-            id: driver.drvId,
-            name: driver.drvNome,
-            email: driver.drvEmail,
-        }
-
-        //let token = jwt.sign({ id: drv.drvId, name: drv.drvNome, email: drv.drvEmail}, process.env.SECRET_JWT, {
-        //    expiresIn: '1h'
-        //});
-        //let refreshToken = jwt.sign({ id: drv.drvId, name: drv.drvNome, email: drv.drvEmail}, process.env.SECRET_JWT_REFRESH, {
-        //    expiresIn: '2h'
-        //});
-        //console.log(drv);
-        
-        return response.json(drv);
-
-    },
-
     async newdriver(request, response) {
         //console.log(request.body);
         const {nome, cpf, nascimento, email, celular , password} = request.body;
@@ -185,7 +151,6 @@ module.exports = {
       const token = request.body.expoPushToken;
       const lat = request.body.latitude;
       const lng = request.body.longitude;
-
       const updToken = await connection('drivers')
       .where(drvId, id)
       .update({

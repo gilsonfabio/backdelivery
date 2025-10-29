@@ -4,7 +4,7 @@ const http = require("http");
 const routes = require("./routes");
 require("dotenv/config");
 
-const { initSocket } = require("./controllers/SocketController"); // import do socket que criamos
+const { initSocket } = require("./controllers/SocketController"); 
 
 const app = express();
 
@@ -23,9 +23,8 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(routes);
 
-// Criar servidor HTTP e integrar Socket.IO
 const server = http.createServer(app);
-global.io = initSocket(server); // expõe io globalmente para usar nas rotas
+global.io = initSocket(server); 
 
 const port = process.env.PORT || 3333;
 server.listen(port, () => {
