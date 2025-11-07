@@ -104,10 +104,11 @@ module.exports = {
             tvlStatus: status 
         });
         // busca motoristas disponíveis próximos
+        const staDriver = 'A';
         const motoristasDisponiveis = await connection("drivers")
-            .where("disponivel", 1)
+            .where('drvStatus', staDriver)
             .orderByRaw(
-                `ABS(oriLat - ${auxOriLat}) + ABS(oriLng - ${auxOriLng}) ASC`
+                `ABS(drvAtuLat - ${auxOriLat}) + ABS(drvAtuLng - ${auxOriLng}) ASC`
             );
 
         // chama motoristas sequencialmente

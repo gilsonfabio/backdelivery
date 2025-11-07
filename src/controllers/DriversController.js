@@ -64,6 +64,7 @@ module.exports = {
       //let refreshToken = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail}, process.env.SECRET_JWT_REFRESH, {
       //    expiresIn: '2h'
       //});
+      
       //console.log(user);
       
       return response.json(user);
