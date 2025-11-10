@@ -103,6 +103,7 @@ module.exports = {
             tvlTimeout: auxTimeout,          
             tvlStatus: status 
         });
+        
         // busca motoristas disponíveis próximos
         const staDriver = 'A';
         const motoristasDisponiveis = await connection("drivers")
@@ -110,7 +111,6 @@ module.exports = {
             .orderByRaw(
                 `ABS(drvAtuLat - ${auxOriLat}) + ABS(drvAtuLng - ${auxOriLng}) ASC`
             );
-
         // chama motoristas sequencialmente
         chamarMotoristasSequencial(
             tvlId,
@@ -120,7 +120,7 @@ module.exports = {
             { lat: auxOriLat, lng: auxOriLng },
             { lat: auxDesLat, lng: auxDesLng }
         );
-
+        
         return response.json({ tvlId });
     },
         
