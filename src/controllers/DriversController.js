@@ -175,5 +175,13 @@ module.exports = {
          
       return response.status(200).json({ msn: 'Status motorista atualizado!'});
     },
+
+    async getStaDriver (request, response) {
+      const driver = await connection('drivers')
+      .where('drvId', id)
+      .select('drvStatus');
+      
+      return response.json(driver);
+    },
           
 };

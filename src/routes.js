@@ -35,6 +35,7 @@ routes.post('/newdriver', DriversController.newdriver);
 routes.post('/signInDriver', DriversController.signIn);
 routes.put('/savDrvToken', DriversController.savDrvToken);
 routes.put('/updStaDriver', DriversController.updStaDriver);
+routes.get('/getStaDriver/:id', DriversController.getStaDriver);
 
 routes.get('/travel', TravelsController.index);
 routes.post('/newtravel', TravelsController.create);
@@ -58,7 +59,6 @@ routes.post('/chamar-corrida', async (req, res) => {
     try {
       const { travelId, passageiroId, passageiroNome, origem, destino } = req.body;
   
-      // Busca motoristas disponíveis
       const motoristas = await connection('drivers')
         .where('drvStatus', 'A')
         .select('*');
