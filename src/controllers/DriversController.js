@@ -177,6 +177,7 @@ module.exports = {
     },
 
     async getStaDriver (request, response) {
+      const { id } = request.query;
       const driver = await connection('drivers')
       .where('drvId', id)
       .select('drvStatus');
