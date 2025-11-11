@@ -149,9 +149,9 @@ module.exports = {
 
     async savDrvToken(request, response) {
       const id = request.body.id; 
-      const token = request.body.expoPushToken;
-      const lat = request.body.latitude;
-      const lng = request.body.longitude;
+      const token = request.body.token;
+      const lat = request.body.lat;
+      const lng = request.body.lng;
       const updToken = await connection('drivers')
       .where(drvId, id)
       .update({
