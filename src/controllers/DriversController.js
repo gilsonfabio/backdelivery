@@ -4,7 +4,7 @@ const saltRounds = 12;
 require('dotenv/config');
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; // raio da Terra em metros
+  const R = 6371e3; 
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
   const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -15,7 +15,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
     Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return R * c; // distância em metros
+  return R * c; 
 }
 
 module.exports = {       
@@ -36,7 +36,7 @@ module.exports = {
 
       const usuario = await connection('drivers')
           .where('drvEmail', email) 
-          .select('drvId', 'drvNome', 'drvEmail', 'drvPassword', 'drvToken' )
+          .select('drvId', 'drvNome', 'drvEmail', 'drvPassword', 'drvToken', 'drvStatus' )
           .first();
       
       if (!usuario) {            
@@ -55,7 +55,8 @@ module.exports = {
           id: usuario.drvId,
           name: usuario.drvNome,
           email: usuario.drvEmail,
-          usrToken: usuario.drvToken
+          usrToken: usuario.drvToken,
+          status: usuario.drvStatus
       }
 
       //let token = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail}, process.env.SECRET_JWT, {
@@ -85,7 +86,6 @@ module.exports = {
           return response.status(404).json({ error: "Nenhum motorista encontrado" });
         }
     
-        // calcula distância de cada motorista e adiciona ao objeto
         const driversComDistancia = drivers.map((driver) => {
           const dist = haversineDistance(
             latitude,

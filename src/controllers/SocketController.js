@@ -84,7 +84,7 @@ async function chamarMotoristasSequencial(travelId, motoristasDisponiveis, passa
 
     // envia FCM
     await enviarNotificacaoFCM(
-      motorista.fcmToken,
+      motorista.drvToken,
       "Nova corrida disponível!",
       `Passageiro: ${passageiroNome}`
     );
