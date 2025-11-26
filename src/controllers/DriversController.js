@@ -153,11 +153,11 @@ module.exports = {
       const lat = request.body.lat;
       const lng = request.body.lng;
       const updToken = await connection('drivers')
-      .where(drvId, id)
+      .where('drvId', id)
       .update({
-          drvToken: token,
-          drvAtuLat: lat,
-          drvAtuLng: lng, 
+        drvToken: token,
+        drvAtuLat: lat,
+        drvAtuLng: lng, 
       });
          
       return response.status(200).json({ msn: 'Token motorista atualizado!'});
@@ -168,7 +168,7 @@ module.exports = {
       const status = request.body.stat;
 
       const updDriver = await connection('drivers')
-      .where(drvId, id)
+      .where('drvId', id)
       .update({
           drvStatus: status,
       });
