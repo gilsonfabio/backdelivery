@@ -52,7 +52,8 @@ module.exports = {
     },
     
     async create(request, response) {
-        const {
+        try {
+          const {
             auxId,
             auxName,
             auxOrigem,
@@ -60,23 +61,25 @@ module.exports = {
             auxOriLng,
             auxDestino,
             auxDesLat,
-            auxDesLng, 
+            auxDesLng,
             tamanho,
             fragilidade,
             tipoItem,
-            preco} = request.body;
-
-        let datProcess = new Date();
-        let year = datProcess.getFullYear();
-        let month = datProcess.getMonth();
-        let day = datProcess.getDate();
-        let datTravel = new Date(year, month, day);
-        let horTravel = moment().format('hh:mm:ss'); 
-        
-        let auxTimeout = 30;
-        let status = 1;
-
-        const [tvlId] = await connection('travels').insert({
+            preco
+          } = request.body;
+      
+          let datProcess = new Date();
+          let year = datProcess.getFullYear();
+          let month = datProcess.getMonth();
+          let day = datProcess.getDate();
+      
+          let datTravel = new Date(year, month, day);
+          let horTravel = moment().format("HH:mm:ss");
+      
+          let auxTimeout = 30;
+          let status = 1;
+      
+          const [tvlId] = await connection("travels").insert({
             tvlData: datTravel,
             tvlHorario: horTravel,
             tvlUsrId: auxId,
@@ -85,43 +88,50 @@ module.exports = {
             tvlOriLng: auxOriLng,
             tvlDestino: auxDestino,
             tvlDesLat: auxDesLat,
-            tvlDesLng: auxDesLng, 
+            tvlDesLng: auxDesLng,
             tvlTamPac: tamanho,
             tvlFraPac: fragilidade,
             tvlTipPac: tipoItem,
             tvlPreco: preco,
-            //tvlDrvId: motorista,
-            //tvlDatIni: datInicio,
-            //tvlHorIni: horInicio,
-            //tvlDatTer: datTermino,
-            //tvlHorTer: horTermino,
-            //tvlTipPag: tipPagto,
-            //tvlCupDes: cupom,
-            //tvlVlrPag: vlrPago,
-            //tvlTaxAdm: taxAdmin,
-            //tvlVlrMot: vlrMotorista,   
-            tvlTimeout: auxTimeout,          
-            tvlStatus: status 
-        });
-        
-        // busca motoristas disponíveis próximos
-        const staDriver = 'A';
-        const motoristasDisponiveis = await connection("drivers")
-            .where('drvStatus', staDriver)
+            tvlTimeout: auxTimeout,
+            tvlStatus: status,
+          });
+      
+          // Motoristas disponíveis
+          const staDriver = "A";
+      
+          const motoristasDisponiveis = await connection("drivers")
+            .where("drvStatus", staDriver)
             .orderByRaw(
-                `ABS(drvAtuLat - ${auxOriLat}) + ABS(drvAtuLng - ${auxOriLng}) ASC`
+              `ABS(drvAtuLat - ${auxOriLat}) + ABS(drvAtuLng - ${auxOriLng}) ASC`
             );
-        // chama motoristas sequencialmente
-        chamarMotoristasSequencial(
+      
+          // CHAMA SEQUENCIALMENTE — AGORA COM AWAIT
+          const motoristaEscolhido = await chamarMotoristasSequencial(
             tvlId,
             motoristasDisponiveis,
             auxId,
             auxName,
             { lat: auxOriLat, lng: auxOriLng },
             { lat: auxDesLat, lng: auxDesLng }
-        );
-        
-        return response.json({ tvlId });
-    },
-        
+          );
+      
+          // Se alguém aceitou, salva na tabela
+          if (motoristaEscolhido) {
+            await connection("travels")
+              .where("tvlId", tvlId)
+              .update({
+                tvlDrvId: motoristaEscolhido.drvId,
+                tvlStatus: 2, // aguardando motorista chegar
+              });
+          }
+      
+          return response.json({ tvlId, motoristaEscolhido });
+      
+        } catch (error) {
+          console.error("Erro ao criar corrida:", error);
+          return response.status(500).json({ error: "Erro ao criar corrida" });
+        }
+    }
+     
 };
