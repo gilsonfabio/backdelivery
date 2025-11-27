@@ -1,10 +1,11 @@
+const express = require("express");
+const http = require("http");
 const { Server } = require("socket.io");
 const admin = require("firebase-admin");
+const connection = require("./database/connection");
 require("dotenv").config();
 
-// -----------------------------
-// Inicializa Firebase FCM
-// -----------------------------
+// Inicializa o Firebase
 admin.initializeApp({
   credential: admin.credential.cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -13,173 +14,182 @@ admin.initializeApp({
   }),
 });
 
-// -----------------------------
-// Mapas de usuários conectados
-// -----------------------------
-let passageiros = {}; // passageiroId → socketId
-let motoristas = {};  // motoristaId  → socketId
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
-// -----------------------------
-// Inicializa servidor Socket.IO
-// -----------------------------
-function initSocket(server) {
-  const io = new Server(server, {
-    cors: { origin: "*" },
-  });
+// Armazena sockets
+const motoristas = {};
+const passageiros = {};
 
-  global.io = io;
-
-  io.on("connection", (socket) => {
-    console.log("Cliente conectado:", socket.id);
-
-    // -----------------------------
-    // Passageiro se conecta
-    // -----------------------------
-    socket.on("passageiro_connect", (passageiroId) => {
-      passageiros[passageiroId] = socket.id;
-      console.log("Passageiro conectado:", passageiroId);
-    });
-
-    // -----------------------------
-    // Motorista se conecta
-    // -----------------------------
-    socket.on("motorista_connect", (motoristaId) => {
-      motoristas[motoristaId] = socket.id;
-      console.log("Motorista conectado:", motoristaId);
-    });
-
-    // -----------------------------
-    // Motorista responde corrida
-    // (EVENTO COMPLETAMENTE CORRIGIDO)
-    // -----------------------------
-    socket.on("resposta_corrida", (data) => {
-      console.log("Resposta recebida:", data);
-
-      // repassa o evento para chamarMotoristasSequencial
-      io.emit("resposta_corrida_global", data);
-
-      // também notifica o passageiro
-      if (passageiros[data.passageiroId]) {
-        io.to(passageiros[data.passageiroId]).emit("status_corrida", {
-          motoristaId: data.motoristaId,
-          aceitou: data.aceitou,
-        });
-      }
-    });
-
-    // -----------------------------
-    // Desconexão
-    // -----------------------------
-    socket.on("disconnect", () => {
-      console.log("Cliente desconectado:", socket.id);
-    });
-  });
-
-  return io;
-}
-
-// -----------------------------
-// Envia notificação via FCM
-// -----------------------------
-async function enviarNotificacaoFCM(token, titulo, corpo) {
-  const message = {
-    notification: { title: titulo, body: corpo },
-    token,
-  };
-
+// =============================
+// FUNÇÃO → Enviar notificação
+// =============================
+async function enviarNotificacao(token, titulo, body, dados = {}) {
   try {
-    await admin.messaging().send(message);
-    console.log("Notificação enviada:", titulo);
-  } catch (err) {
-    console.error("Erro ao enviar notificação:", err);
+    console.log("📨 Enviando notificação FCM...");
+    console.log("TOKEN:", token);
+    console.log("DADOS:", dados);
+
+    const message = {
+      token,
+      notification: {
+        title: titulo,
+        body,
+      },
+      data: dados,
+    };
+
+    const response = await admin.messaging().send(message);
+
+    console.log("✔️ Notificação enviada:", response);
+    return true;
+  } catch (error) {
+    console.log("❌ ERRO AO ENVIAR NOTIFICAÇÃO:", error);
+    if (error.errorInfo) console.log("DETALHES:", error.errorInfo);
+    return false;
   }
 }
 
-// -----------------------------
-// CHAMAR MOTORISTAS SEQUENCIALMENTE
-// -----------------------------
-async function chamarMotoristasSequencial(
-  travelId,
-  motoristasDisponiveis,
-  passageiroId,
-  passageiroNome,
-  origem,
-  destino
-) {
-  const io = global.io;
+// =============================
+// FUNÇÃO → Chamar motoristas
+// =============================
+async function chamarMotoristasSequencial(corridaId, passageiroId) {
+  console.log("\n===============================");
+  console.log("🚗 INICIANDO CHAMADA DE MOTORISTAS");
+  console.log("===============================\n");
 
-  for (let i = 0; i < motoristasDisponiveis.length; i++) {
-    const m = motoristasDisponiveis[i];
+  // 1. Buscar motoristas disponíveis
+  const [lista] = await connection.execute(
+    "SELECT motId, motFcmToken FROM motoristas WHERE motStatus = 1"
+  );
 
-    const motoristaId = m.drvId;     // ID correto do banco
-    const token = m.drvToken;        // Token FCM do motorista
+  if (lista.length === 0) {
+    console.log("❌ Nenhum motorista disponível");
+    return;
+  }
 
-    console.log(`⚡ Chamando motorista ${motoristaId}...`);
+  let index = 0;
 
-    // -----------------------------
-    // Envia push FCM
-    // -----------------------------
-    await enviarNotificacaoFCM(
-      token,
-      "Nova corrida disponível!",
-      `Passageiro: ${passageiroNome}`
+  async function chamarProximo() {
+    if (index >= lista.length) {
+      console.log("⛔ NENHUM MOTORISTA ACEITOU");
+      io.to(passageiros[passageiroId]).emit("status_corrida", {
+        motoristaId: null,
+        aceitou: false,
+      });
+      return;
+    }
+
+    const motorista = lista[index];
+    index++;
+
+    console.log(`\n📣 Chamando motorista ID ${motorista.motId}`);
+
+    // Envia notificação FCM
+    const enviada = await enviarNotificacao(
+      motorista.motFcmToken,
+      "Nova corrida disponível",
+      "Há uma corrida próxima para você aceitar.",
+      {
+        corridaId: String(corridaId),
+        passageiroId: String(passageiroId),
+        motoristaId: String(motorista.motId),
+      }
     );
 
-    // -----------------------------
-    // Envia socket para o motorista (se online)
-    // -----------------------------
-    if (motoristas[motoristaId]) {
-      io.to(motoristas[motoristaId]).emit("nova_corrida", {
-        travelId,
-        passageiroId,
-        passageiroNome,
-        origem,
-        destino,
-      });
+    if (!enviada) {
+      console.log("⚠️ Notificação falhou — indo para o próximo motoristas");
+      chamarProximo();
+      return;
     }
 
-    // -----------------------------
-    // Espera resposta do motorista
-    // -----------------------------
-    const aceitou = await new Promise((resolve) => {
-      let respondeu = false;
+    console.log("⏳ Aguardando resposta do motorista por 12s...");
 
-      const listener = (data) => {
-        if (
-          data.passageiroId === passageiroId &&
-          data.motoristaId === motoristaId
-        ) {
-          respondeu = true;
-          io.off("resposta_corrida_global", listener);
-          resolve(data.aceitou);
-        }
-      };
+    let respondeu = false;
 
-      // escuta resposta global
-      io.on("resposta_corrida_global", listener);
+    const timeout = setTimeout(() => {
+      if (!respondeu) {
+        console.log("⌛ Tempo esgotado — motorista não respondeu.");
+        chamarProximo();
+      }
+    }, 12000);
 
-      // timeout (50s)
-      setTimeout(() => {
-        if (!respondeu) {
-          io.off("resposta_corrida_global", listener);
-          resolve(false);
-        }
-      }, 50000);
+    io.once("motorista_respondeu_" + corridaId, (data) => {
+      respondeu = true;
+      clearTimeout(timeout);
+
+      if (data.aceitou) {
+        console.log("🎉 MOTORISTA ACEITOU!", data.motoristaId);
+
+        io.to(passageiros[passageiroId]).emit("status_corrida", {
+          motoristaId: data.motoristaId,
+          aceitou: true,
+        });
+      } else {
+        console.log("❌ Motorista recusou — chamando próximo");
+        chamarProximo();
+      }
     });
-
-    if (aceitou) {
-      console.log(`🚗 Motorista ${motoristaId} ACEITOU a corrida!`);
-      return m; // retorna o motorista aceitou
-    } else {
-      console.log(`⛔ Motorista ${motoristaId} não respondeu ou recusou.`);
-    }
   }
 
-  console.log("❌ Nenhum motorista aceitou a corrida.");
-  return null;
+  chamarProximo();
 }
 
-module.exports = {
-  initSocket,
-  chamarMotoristasSequencial,
-};
+// =============================
+// SOCKET.IO
+// =============================
+io.on("connection", (socket) => {
+  console.log("🔥 Cliente conectado:", socket.id);
+
+  socket.on("registrar_motorista", ({ motoristaId }) => {
+    motoristas[motoristaId] = socket.id;
+    console.log("🧭 Motorista registrado:", motoristaId);
+  });
+
+  socket.on("registrar_passageiro", ({ passageiroId }) => {
+    passageiros[passageiroId] = socket.id;
+    console.log("👤 Passageiro registrado:", passageiroId);
+  });
+
+  // Motorista enviou resposta
+  socket.on("resposta_corrida", (data) => {
+    console.log("📥 Resposta do motorista:", data);
+
+    io.emit("resposta_corrida_global", data);
+
+    io.emit("motorista_respondeu_" + data.corridaId, data);
+
+    if (passageiros[data.passageiroId]) {
+      io.to(passageiros[data.passageiroId]).emit("status_corrida", {
+        motoristaId: data.motoristaId,
+        aceitou: data.aceitou,
+      });
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❎ Cliente desconectado:", socket.id);
+  });
+});
+
+// =============================
+// ROTA TESTE PARA CRIAR CORRIDA
+// =============================
+app.get("/criar-corrida/:passageiroId", async (req, res) => {
+  const passageiroId = req.params.passageiroId;
+
+  const [insert] = await connection.execute(
+    "INSERT INTO corridas (corPassageiroId, corStatus) VALUES (?, 0)",
+    [passageiroId]
+  );
+
+  console.log("🚕 Corrida criada:", insert.insertId);
+
+  chamarMotoristasSequencial(insert.insertId, passageiroId);
+
+  res.json({ ok: true, corridaId: insert.insertId });
+});
+
+// =============================
+server.listen(3333, () => console.log("🔥 Servidor rodando na porta 3333"));
