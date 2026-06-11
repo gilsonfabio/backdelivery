@@ -163,16 +163,28 @@ module.exports = {
     },
 
     async updStaDriver(request, response) {
-      const id = request.body.id; 
-      const status = request.body.stat;
+      try {
+        const { id, status } = request.body;
 
-      const updDriver = await connection('drivers')
-      .where('drvId', id)
-      .update({
-          drvStatus: status,
-      });
-         
-      return response.status(200).json({ msn: 'Status motorista atualizado!'});
+        console.log("Recebido:", { id, status });
+
+        await connection("drivers")
+          .where("drvId", id)
+          .update({
+            drvStatus: status,
+          });
+
+        return response.status(200).json({
+          msn: "Status motorista atualizado!",
+        });
+
+      } catch (error) {
+        console.error(error);
+
+        return response.status(500).json({
+          error: error.message,
+        });
+      }
     },
 
     async getStaDriver (request, response) {
