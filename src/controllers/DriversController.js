@@ -196,4 +196,34 @@ module.exports = {
       return response.json(driver);
     },
           
+    async updateLocation(req, res) {
+    try {
+      const { id, lat, lng } = req.body;
+
+      if (!id || !lat || !lng) {
+        return res.status(400).json({
+          error: "Parâmetros inválidos",
+        });
+      }
+
+      await connection("drivers")
+        .where("drvId", id)
+        .update({
+          drvAtuLat: lat,
+          drvAtuLng: lng,
+          updated_at: new Date(),
+        });
+
+      return res.json({
+        success: true,
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        error: "Erro interno",
+      });
+    }
+  },
 };

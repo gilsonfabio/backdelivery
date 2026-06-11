@@ -36,6 +36,8 @@ routes.post('/savDrvToken', DriversController.savDrvToken);
 routes.put('/updStaDriver', DriversController.updStaDriver);
 routes.get('/getStaDriver/:id', DriversController.getStaDriver);
 
+routes.put('/updLocationDriver', DriversController.updLocationDriver);
+
 routes.get('/travel', TravelsController.index);
 routes.post('/newtravel', TravelsController.create);
 routes.post('/accept', TravelsController.acceptTravel);
@@ -53,5 +55,7 @@ routes.post('/newlinha', LinhasController.create);
 routes.post('/authorize', EfipayController.auth);
 routes.post('/webhook', EfipayController.webhook);
 routes.post('/certificado', EfipayController.certificado);
+
+
 
 module.exports = routes;

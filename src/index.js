@@ -1,24 +1,31 @@
-const express = require('express');
-const cors = require('cors'); 
-const routes = require('./routes');
-require('dotenv/config');
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const routes = require("./routes");
+const initSocket = require("./sockets/socket");
+
+require("dotenv/config");
 
 const app = express();
 
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
-    res.header("Access-Control-Allow-Headers", "X-PINGOTHER, Content-Type, Authorization");
-    app.use(cors());
-    next();
-});
-
-const port = process.env.PORT || 3333;
-const host = process.env.DATABASE_URL;
-
+app.use(cors());
 app.use(express.json());
 app.use(routes);
 
-app.listen(port, () => {
-    console.info(`Server running...`, port);
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+initSocket(io);
+
+const port = process.env.PORT || 3333;
+
+server.listen(port, () => {
+  console.log(`Server running on ${port}`);
 });
