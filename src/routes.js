@@ -36,7 +36,7 @@ routes.post('/savDrvToken', DriversController.savDrvToken);
 routes.put('/updStaDriver', DriversController.updStaDriver);
 routes.get('/getStaDriver/:id', DriversController.getStaDriver);
 
-routes.put('/updLocationDriver', DriversController.updLocationDriver);
+routes.put('/updLocationDriver', DriversController.updateLocation);
 
 routes.get('/travel', TravelsController.index);
 routes.post('/newtravel', TravelsController.create);
