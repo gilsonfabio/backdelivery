@@ -28,48 +28,47 @@ module.exports = {
     },
 
     async signIn(request, response) {
-      let email = request.body.email;
-      let senha = request.body.password;
+      try {
+        const { email, password } = request.body;
 
-      //console.log('Email:', email);
-      //console.log('Password:', senha);
+        console.log("Body recebido:", request.body);
 
-      const usuario = await connection('drivers')
-          .where('drvEmail', email) 
-          .select('drvId', 'drvNome', 'drvEmail', 'drvPassword', 'drvToken', 'drvStatus' )
-          .first();
-      
-      if (!usuario) {            
-          return response.status(400).json({ error: 'Não encontrou usuário com este ID'});
-      } 
+        const usuario = await connection("drivers")
+          .where("drvEmail", email)
+          .select(
+            "drvId",
+            "drvNome",
+            "drvEmail",
+            "drvPassword",
+            "drvToken",
+            "drvStatus"
+          )
+        .first();
 
-      //console.log(user.drvPassword)
-      //let pass = usuario.drvPassword;
-      //const match = await bcrypt.compare(senha, pass)
+        console.log("Usuário encontrado:", usuario);
 
-      //if(!match) {
-      //    return response.status(403).send({ auth: false, message: 'User invalid!' });
-      //}
+        if (!usuario) {
+          return response.status(400).json({
+            error: "Não encontrou usuário"
+          });
+        }
 
-      const user = {
+        const user = {
           id: usuario.drvId,
           name: usuario.drvNome,
           email: usuario.drvEmail,
           usrToken: usuario.drvToken,
           status: usuario.drvStatus
+        };
+
+        return response.json(user);
+
+      } catch (error) {
+        console.error("ERRO LOGIN:", error);
+        return response.status(500).json({
+          error: error.message
+        });
       }
-
-      //let token = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail}, process.env.SECRET_JWT, {
-      //    expiresIn: '1h'
-      //});
-      //let refreshToken = jwt.sign({ id: user.drvId, name: user.drvNome, email: user.drvEmail}, process.env.SECRET_JWT_REFRESH, {
-      //    expiresIn: '2h'
-      //});
-      
-      //console.log(user);
-      
-      return response.json(user);
-
     },
 
     async searchDriver(request, response) {
