@@ -51,86 +51,97 @@ module.exports = {
     },
     
     async create(request, response) {
-        try {
-          const {
-            auxId,
-            auxName,
-            auxOrigem,
-            auxOriLat,
-            auxOriLng,
-            auxDestino,
-            auxDesLat,
-            auxDesLng,
-            tamanho,
-            fragilidade,
-            tipoItem,
-            preco
-          } = request.body;
-      
-          let datProcess = new Date();
-          let year = datProcess.getFullYear();
-          let month = datProcess.getMonth();
-          let day = datProcess.getDate();
-      
-          let datTravel = new Date(year, month, day);
-          let horTravel = moment().format("HH:mm:ss");
-      
-          let auxTimeout = 30;
-          let status = 1;
-      
-          const [tvlId] = await connection("travels").insert({
-            tvlData: datTravel,
-            tvlHorario: horTravel,
-            tvlUsrId: auxId,
-            tvlOrigem: auxOrigem,
-            tvlOriLat: auxOriLat,
-            tvlOriLng: auxOriLng,
-            tvlDestino: auxDestino,
-            tvlDesLat: auxDesLat,
-            tvlDesLng: auxDesLng,
-            tvlTamPac: tamanho,
-            tvlFraPac: fragilidade,
-            tvlTipPac: tipoItem,
-            tvlPreco: preco,
-            tvlTimeout: auxTimeout,
-            tvlStatus: status,
-          });
-      
-          // Motoristas disponíveis
-          const staDriver = "A";
-      
-          const motoristasDisponiveis = await connection("drivers")
-            .where("drvStatus", staDriver)
-            .orderByRaw(
-              `ABS(drvAtuLat - ${auxOriLat}) + ABS(drvAtuLng - ${auxOriLng}) ASC`
-            );
-      
-          // CHAMA SEQUENCIALMENTE — AGORA COM AWAIT
-          const motoristaEscolhido = await chamarMotoristasSequencial(
-            tvlId,
-            motoristasDisponiveis,
-            auxId,
-            auxName,
-            { lat: auxOriLat, lng: auxOriLng },
-            { lat: auxDesLat, lng: auxDesLng }
+      try {
+        const {
+          auxId,
+          auxName,
+          auxOrigem,
+          auxOriLat,
+          auxOriLng,
+          auxDestino,
+          auxDesLat,
+          auxDesLng,
+          tamanho,
+          fragilidade,
+          tipoItem,
+          preco
+        } = request.body;
+
+        const datTravel = moment().format("YYYY-MM-DD");
+        const horTravel = moment().format("HH:mm:ss");
+
+      const [tvlId] = await connection("travels").insert({
+        tvlData: datTravel,
+        tvlHorario: horTravel,
+        tvlUsrId: auxId,
+        tvlOrigem: auxOrigem,
+        tvlOriLat: auxOriLat,
+        tvlOriLng: auxOriLng,
+        tvlDestino: auxDestino,
+        tvlDesLat: auxDesLat,
+        tvlDesLng: auxDesLng,
+        tvlTamPac: tamanho,
+        tvlFraPac: fragilidade,
+        tvlTipPac: tipoItem,
+        tvlPreco: preco,
+        tvlTimeout: 30,
+        tvlStatus: 1
+      });
+
+      const drivers = Array.from(
+        onlineDrivers.entries()
+        ).map(
+          ([drvId, driver]) => ({
+            drvId,
+            socketId: driver.socketId,
+            latitude: driver.latitude,
+          longitude: driver.longitude
+          })
+        );
+
+        drivers.sort((a, b) => {
+          const distA = Math.abs(a.latitude - auxOriLat) + Math.abs(a.longitude - auxOriLng);
+          const distB = Math.abs(b.latitude - auxOriLat) + Math.abs(b.longitude - auxOriLng);
+
+          return (
+            distA - distB
           );
-      
-          // Se alguém aceitou, salva na tabela
-          if (motoristaEscolhido) {
-            await connection("travels")
-              .where("tvlId", tvlId)
-              .update({
-                tvlDrvId: motoristaEscolhido.drvId,
-                tvlStatus: 2, // aguardando motorista chegar
-              });
-          }
-      
-          return response.json({ tvlId, motoristaEscolhido });
-      
-        } catch (error) {
-          console.error("Erro ao criar corrida:", error);
-          return response.status(500).json({ error: "Erro ao criar corrida" });
         }
+      );
+
+      const driver = await chamarMotoristasSequencial(tvlId, drivers, {
+          auxId,
+          auxName,
+          origem: auxOrigem,
+          destino: auxDestino,
+          origemLat: auxOriLat,
+          origemLng: auxOriLng,
+          destinoLat: auxDesLat,
+          destinoLng: auxDesLng
+        }
+      );
+
+      if (driver) {
+
+        await connection("travels")
+          .where("tvlId", tvlId)
+          .update({
+            tvlDrvId: driver.drvId,
+            tvlStatus: 2
+          });
+      }
+
+      return response.json({
+        success: true,
+        tvlId,
+        driver
+      });
+
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({error: "Erro interno"});
+
     }
+  },
      
 };

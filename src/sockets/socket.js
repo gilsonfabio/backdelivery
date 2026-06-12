@@ -1,23 +1,34 @@
-const DriverSocket = require("./DriverSocket");
+const DriverSocket =
+require("./DriverSocket");
 
-module.exports = function initSocket(io) {
+const TravelSocket =
+require("./TravelSocket");
 
-  io.on("connection", (socket) => {
+module.exports =
+function initSocket(io) {
 
-    console.log(
-      "Cliente conectado:",
-      socket.id
-    );
+  global.io = io;
 
-    DriverSocket(io, socket);
+  io.on(
+    "connection",
+    (socket) => {
 
-    socket.on("disconnect", () => {
       console.log(
-        "Cliente desconectado:",
+        "Socket conectado:",
         socket.id
       );
-    });
 
-  });
+      DriverSocket(
+        io,
+        socket
+      );
+
+      TravelSocket(
+        io,
+        socket
+      );
+
+    }
+  );
 
 };
